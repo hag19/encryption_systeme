@@ -42,7 +42,7 @@ int main() {
         printf("===================================\n");
         printf("Enter your choice: ");
         scanf("%d", &choice);
-        getchar(); // Ignore newline
+        getchar(); // Ignorer Entrée
 
         switch (choice) {
             case 1:
@@ -52,7 +52,7 @@ int main() {
             case 2:
                 printf("\nEnter the path to change directory: ");
                 fgets(path, sizeof(path), stdin);
-                path[strcspn(path, "\n")] = 0; // Ignorer Entrée
+                path[strcspn(path, "\n")] = 0; // Ignorer \n
                 if (chdir(path) == 0) {
                     printf("Changed to directory %s\n", path);
                     getcwd(path, sizeof(path));// Mettre a jour le chemin
@@ -64,7 +64,7 @@ int main() {
             case 3:
                 printf("\nEnter the name of the file to create: ");
                 fgets(filename, sizeof(filename), stdin);
-                filename[strcspn(filename, "\n")] = 0; // Ignorer Entrée
+                filename[strcspn(filename, "\n")] = 0; // Ignorer \n
                 FILE *fp = fopen(filename, "w");
                 if (fp) {
                     printf("File created successfully\n");
@@ -77,7 +77,7 @@ int main() {
             case 4:
                 printf("\nEnter the name of the file to delete: ");
                 fgets(filename, sizeof(filename), stdin);
-                filename[strcspn(filename, "\n")] = 0; // Ignorer Entrée
+                filename[strcspn(filename, "\n")] = 0; // Ignorer \n
                 if (remove(filename) == 0) {
                     printf("File deleted successfully\n");
                 } else {
