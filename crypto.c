@@ -50,7 +50,7 @@ uint64_t mod_inverse(uint64_t a, uint64_t m) {
 }
 
 void generate_rsa_keys(uint64_t *public_key, uint64_t *private_key, uint64_t *n) {
-    uint64_t p = 61, q = 53; // Two prime numbers
+    uint64_t p = 60217, q = 23197; // Two prime numbers
     *n = p * q;
     uint64_t phi = (p - 1) * (q - 1);
 
