@@ -1,69 +1,109 @@
-#include "crypto.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "src/plugins/plugin_manager.h"
+#include "src/algorithms/aes.h"
+#include "src/algorithms/rsa.h"
 
-void read_file(const char filename, uint8_t **data, size_t *size) {
-    FILE *file = fopen(filename, "rb");
-    if (!file) {
-        perror("File open failed");
-        exit(EXIT_FAILURE);
-    }
-
-    fseek(file, 0, SEEK_END);
-    *size = ftell(file);
-    rewind(file);
-
-    data = malloc(size);
-    fread(data, 1,size, file);
-    fclose(file);
+void display_algorithms() {
+    printf("Available algorithms:\n");
+    printf("1. AES\n");
+    printf("2. RSA\n");
+    printf("3. Register custom algorithm\n");
 }
 
-void write_file(const char *filename, uint8_t *data, size_t size) {
-    FILE *file = fopen(filename, "wb");
-    if (!file) {
-        perror("File write failed");
-        exit(EXIT_FAILURE);
-    }
+void handle_aes() {
+    char filePath[BUFFER_SIZE];
+    char key[AES_KEY_SIZE];
 
-    fwrite(data, 1, size, file);
-    fclose(file);
+    printf("Enter the file name: ");
+    scanf("%s", filePath);
+
+    aes_generate_key(key, AES_KEY_SIZE);
+    printf("Generated AES key: %s\n", key);
+
+    aes_initialize(key);
+    aes_encrypt_file(filePath);
+
+    printf("Encryption complete!\n");
+
+    printf("Enter the AES key for decryption: ");
+    scanf("%s", key);
+
+    aes_decrypt_file(filePath, key);
+
+    printf("Decryption complete!\n");
 }
 
-int main(int argc, char *argv[]) {
-    if (argc != 4) {
-        fprintf(stderr, "Usage: %s <input_file> <encrypted_file> <public_key_file>\n", argv[0]);
-        return EXIT_FAILURE;
+void handle_rsa() {
+    char filePath[BUFFER_SIZE];
+    mpz_t decryptionKey, modulus;
+
+    mpz_inits(decryptionKey, modulus, NULL);
+
+    printf("Enter the file name: ");
+    scanf("%s", filePath);
+
+    generateKeys(); // Generate p, q, n, e, and d for encryption
+
+    encryptFile(filePath);
+
+    gmp_printf("Encryption complete!\nPublic key (e, n): (%Zd, %Zd)\n", e, n);
+    gmp_printf("Private key (d, n): (%Zd, %Zd)\n", d, n);
+
+    printf("Enter the decryption key (d): ");
+    gmp_scanf("%Zd", decryptionKey);
+    printf("Enter the modulus (n): ");
+    gmp_scanf("%Zd", modulus);
+
+    decryptFile(filePath, decryptionKey, modulus);
+
+    printf("Decryption complete!\n");
+
+    mpz_clears(decryptionKey, modulus, NULL);
+}
+
+void handle_custom_algorithm() {
+    char plugin_path[BUFFER_SIZE];
+
+    printf("Enter the path to the custom algorithm plugin: ");
+    scanf("%s", plugin_path);
+
+    if (load_plugin(plugin_path) == 0) {
+        printf("Custom algorithm loaded successfully.\n");
+    } else {
+        printf("Failed to load custom algorithm.\n");
+    }
+}
+
+int main() {
+    int choice;
+
+    register_algorithm(&aes_algorithm);
+    register_algorithm(&rsa_algorithm);
+
+    while (1) {
+        display_algorithms();
+        printf("Choose an algorithm (or 0 to exit): ");
+        scanf("%d", &choice);
+
+        switch (choice) {
+            case 0:
+                exit(0);
+            case 1:
+                handle_aes();
+                break;
+            case 2:
+                handle_rsa();
+                break;
+            case 3:
+                handle_custom_algorithm();
+                break;
+            default:
+                printf("Invalid choice.\n");
+                break;
+        }
     }
 
-    const char *input_file = argv[1];
-    const char *encrypted_file = argv[2];
-    const char *public_key_file = argv[3];
-
-    uint64_t public_key, private_key, n;
-    generate_rsa_keys(&public_key, &private_key, &n);
-
-    printf("Public Key: %lu, N: %lu\n", public_key, n);
-    printf("Private Key: %lu\n", private_key);
-
-    uint8_t *data;
-    size_t data_size;
-    read_file(input_file, &data, &data_size);
-
-    uint8_t encrypted_data[data_size];
-    uint8_t aes_key[16] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
-                           0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F};
-
-    for (size_t i = 0; i < data_size; i += 16) {
-        aes_encrypt_block(data + i, aes_key);
-    }
-
-    write_file(encrypted_file, data, data_size);
-
-    FILE *pub_key_file = fopen(public_key_file, "w");
-    fprintf(pub_key_file, "Public Key: %lu, N: %lu\n", public_key, n);
-    fclose(pub_key_file);
-
-    free(data);
-    return EXIT_SUCCESS;
+    return 0;
 }
