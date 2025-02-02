@@ -1,0 +1,3 @@
+C:/Users/laboi/CLionProjects/encryption/cmake-build-debug/CMakeFiles/encryption.dir
+C:/Users/laboi/CLionProjects/encryption/cmake-build-debug/CMakeFiles/edit_cache.dir
+C:/Users/laboi/CLionProjects/encryption/cmake-build-debug/CMakeFiles/rebuild_cache.dir
