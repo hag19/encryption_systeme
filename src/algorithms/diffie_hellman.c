@@ -24,6 +24,7 @@ void generateDiffieHellmanKeys() {
     gmp_randseed_ui(state, rand());
     int choice;
     printf("you have p and g? 1 for yes 2 for no\n");
+    scanf("%d",&choice);
     if(choice==1){
         char p_str[BUFFER_SIZE];
         char g_str[BUFFER_SIZE];
@@ -79,7 +80,7 @@ void dhStore(FILE *keyFile) {
     fprintf(keyFile, "p=%s\n", dh_p_base62);
     fprintf(keyFile, "g=%s\n", dh_g_base62);
     fprintf(keyFile, "shared_key=%s\n", shared_key_base62);
-    printf("Generated public key (p, g, A): (%s, %s, %s)\nGenerated private key (a): (%s)\n", dh_p, dh_g,dh_A_base62,dh_a_base62);
+    printf("Generated public key (p, g, A): (%s, %s, %s)\nGenerated private key (a): (%s)\n", dh_p_base62, dh_g_base62,dh_A_base62,dh_a_base62);
     free(dh_A_base62);
     free(dh_a_base62);
     free(dh_p_base62);

@@ -181,7 +181,7 @@ void print_key() {
 
 void aes_encrypt_file(const char *filepath) {
     int choice;
-    printf("you want me to generate the key or you have your key? 1 for generate 2 for enter your key\n");
+    printf("do you have aes encryption key or you need one? 1 for generate 2 for enter your key\n");
     scanf("%d", &choice);
     if (choice == 1) {
         generate_key(key);

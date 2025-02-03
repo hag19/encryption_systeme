@@ -3,12 +3,6 @@
 #include <string.h>
 #include "src/plugins/plugin_manager.h"
 #include "tests/benchmark.c"
-#include "src/algorithms/aes.h"
-#include "src/algorithms/rsa.h"
-#include "src/algorithms/elgamal.h"
-#include "src/types/constants.h"
-#include "src/algorithms/hill.h"
-#include "src/algorithms/diffie_hellman.h"
 void handle_existing_algorithm(int choice) {
     EncryptionAlgorithm* chosen_algorithm = get_algorithm(choice);
     if (chosen_algorithm) {
@@ -52,11 +46,7 @@ void load_custom_algorithm() {
 
 int main() {
     int choice;
-    register_algorithm(&rsa_algorithm);
-    register_algorithm(&aes_algorithm);  
-    register_algorithm(&elgamal_algorithm);
-    register_algorithm(&hill_algorithm);
-    register_algorithm(&diffie_hellman_algorithm);
+    register_existing_algorithms();
     while (1) {
         printf("1 for existing algorithms 2 for custom (or 0 to exit): ");
         scanf("%d", &choice);

@@ -160,6 +160,8 @@ void decryptFile(const char *filepath) {
     char n_str[BUFFER_SIZE];
     printf("Enter the private key (d): \n and modulus (n): \n");
     scanf("%s %s",d_str,n_str);
+    mpz_set_str(d, d_str, 62);
+    mpz_set_str(n, n_str, 62);
     }
 
     char cipherStr[BUFFER_SIZE];

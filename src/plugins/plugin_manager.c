@@ -2,7 +2,11 @@
 #include <stdio.h>
 #include <string.h>
 #include "../types/constants.h"
-
+#include "../algorithms/rsa.h"
+#include "../algorithms/aes.h"
+#include "../algorithms/elgamal.h"
+#include "../algorithms/hill.h"
+#include "../algorithms/diffie_hellman.h"
 static EncryptionAlgorithm *algorithms[MAX_ALGORITHMS];
 static int algorithm_count = 0;
 static EncryptionAlgorithm *current_algorithm = NULL;
@@ -12,7 +16,13 @@ void register_algorithm(EncryptionAlgorithm *algorithm) {
         algorithms[algorithm_count++] = algorithm;
     }
 }
-
+void register_existing_algorithms() {
+    register_algorithm(&rsa_algorithm);
+    register_algorithm(&aes_algorithm);
+    register_algorithm(&elgamal_algorithm);
+    register_algorithm(&hill_algorithm);
+    register_algorithm(&diffie_hellman_algorithm);
+}
 void display_algorithms() {
     printf("Available algorithms:\n");
     for (int i = 0; i < algorithm_count; i++) {
