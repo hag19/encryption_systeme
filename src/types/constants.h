@@ -7,4 +7,5 @@
 #define AES_KEY_SIZE 16
 #define AES_ROUNDS 10
 #define MAX_ALGORITHMS 10
+#define MATRIX_SIZE 3
 #endif // CONSTANTS_H
