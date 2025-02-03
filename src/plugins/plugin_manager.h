@@ -13,5 +13,6 @@ void register_algorithm(EncryptionAlgorithm *algorithm);
 EncryptionAlgorithm* get_algorithm(const int choice);
 int load_plugin(const char *plugin_path);
 void display_algorithms();
-void register_existing_algorithms()
+void register_existing_algorithms();  // Declare this function properly
+
 #endif // PLUGIN_MANAGER_H

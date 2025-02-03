@@ -1,15 +1,17 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include "src/plugins/plugin_manager.h"
-#include "tests/benchmark.c"
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include "src/types/constants.h"
+#include "tests/benchmark.h"  // Include benchmark header file
+
 void handle_existing_algorithm(int choice) {
     EncryptionAlgorithm* chosen_algorithm = get_algorithm(choice);
     if (chosen_algorithm) {
         char filePath[BUFFER_SIZE];
         printf("Enter the file name: ");
         scanf("%s", filePath);
-        printf("1 for encryption\n2 for decryption\n3 becnhmar the algorithm\n");
+        printf("1 for encryption\n2 for decryption\n3 benchmark the algorithm\n");
         int option;
         scanf("%d", &option);
         switch (option) {
@@ -20,7 +22,7 @@ void handle_existing_algorithm(int choice) {
                 chosen_algorithm->decrypt(filePath);
                 break;
             case 3:
-                benchmark_algorithm(chosen_algorithm, filePath);
+                benchmark_algorithm(chosen_algorithm, filePath);  // Ensure this matches your declaration
                 break;    
             default:
                 printf("Invalid choice.\n");
@@ -68,5 +70,5 @@ int main() {
         }
     }
 
-    return 0;
+    return 0;  // Ensure proper closing of main
 }

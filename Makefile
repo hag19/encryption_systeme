@@ -1,7 +1,7 @@
 # Compiler and flags
 CC = gcc
-CFLAGS = -I/usr/include/x86_64-linux-gnu -I./src/types 
-LDFLAGS = -L/usr/lib/x86_64-linux-gnu -lgmp 
+CFLAGS = -I/usr/include/x86_64-linux-gnu -I./src/types
+LDFLAGS = -L/usr/lib/x86_64-linux-gnu -lgmp
 
 # Directories
 SRC_DIR = ./src
@@ -12,8 +12,9 @@ BIN_DIR = ./bin
 TARGET = $(BIN_DIR)/main
 
 # Source files
-SRCS = $(wildcard $(SRC_DIR)/algorithms/*.c) ./main.c $(SRC_DIR)/plugins/plugin_manager.c
-OBJS = $(patsubst $(SRC_DIR)/algorithms/%.c, $(OBJ_DIR)/algorithms/%.o, $(wildcard $(SRC_DIR)/algorithms/*.c)) $(OBJ_DIR)/main.o $(OBJ_DIR)/plugins/plugin_manager.o
+SRCS = $(wildcard $(SRC_DIR)/algorithms/*.c) ./main.c $(SRC_DIR)/plugins/plugin_manager.c tests/benchmark.c
+OBJS = $(patsubst $(SRC_DIR)/algorithms/%.c, $(OBJ_DIR)/algorithms/%.o, $(wildcard $(SRC_DIR)/algorithms/*.c)) \
+       $(OBJ_DIR)/main.o $(OBJ_DIR)/plugins/plugin_manager.o $(OBJ_DIR)/benchmark.o
 
 # Default target
 all: $(TARGET)
@@ -36,6 +37,11 @@ $(OBJ_DIR)/main.o: ./main.c
 # Rule to build object file for plugin_manager.c
 $(OBJ_DIR)/plugins/plugin_manager.o: $(SRC_DIR)/plugins/plugin_manager.c
 	@mkdir -p $(OBJ_DIR)/plugins
+	$(CC) $(CFLAGS) -c $< -o $@
+
+# Rule to build object file for benchmark.c
+$(OBJ_DIR)/benchmark.o: tests/benchmark.c
+	@mkdir -p $(OBJ_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 # Clean up

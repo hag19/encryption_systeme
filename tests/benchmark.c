@@ -2,12 +2,15 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <stdlib.h>
 #include "../src/types/encryption_algorithm.h"
 #include "../src/types/constants.h"
+
 void benchmark_algorithm(EncryptionAlgorithm *algorithm, char *filePath) {
     clock_t start, end;
     double cpu_time_used;
     printf("Benchmarking %s algorithm\n", algorithm->name);
+
     // Benchmark encryption
     start = clock();
     algorithm->encrypt(filePath);
