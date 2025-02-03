@@ -16,6 +16,7 @@ find_library(SDL2_TTF_LIBRARY NAMES SDL2_ttf PATHS ${SDL2_TTF_PATH}/lib)
 
 include_directories(${SDL2_INCLUDE_DIR} ${SDL2_TTF_INCLUDE_DIR} ${SDL2_IMAGE_INCLUDE_DIR})
 
-add_executable(encryption main.c)
+add_executable(encryption main.c
+        graphic.c)
 
 target_link_libraries(SMS ${SDL2_LIBRARY} ${SDL2_TTF_LIBRARY} ${SDL2_IMAGE_LIBRARY})
