@@ -6,6 +6,7 @@
 #include "aes.h"
 #include <unistd.h>
 #include "../types/constants.h"
+uint8_t key[AES_KEY_SIZE];
 static const uint8_t sbox[256] = {
     0x63, 0x7c, 0x77, 0x7b, 0xf2, 0x6b, 0x6f, 0xc5, 0x30, 0x01, 0x67, 0x2b, 0xfe, 0xd7, 0xab, 0x76,
     0xca, 0x82, 0xc9, 0x7d, 0xfa, 0x59, 0x47, 0xf0, 0xad, 0xd4, 0xa2, 0xaf, 0x9c, 0xa4, 0x72, 0xc0,
@@ -164,18 +165,31 @@ void generate_key(uint8_t *key) {
     }
 }
 
+void save_key(const char *your_key) {
+    for (int i = 0; i < AES_KEY_SIZE; i++) {
+        key[i] = your_key[i];
+    }
+}
 
-void print_key(const uint8_t *key) {
+void print_key() {
     printf("Encryption key: ");
     for (int i = 0; i < AES_KEY_SIZE; i++) {
         printf("%02x", key[i]);
     }
     printf("\n");
 }
+
 void aes_encrypt_file(const char *filepath) {
-    uint8_t key[AES_KEY_SIZE];
-    generate_key(key);
-    print_key(key);
+    int choice;
+    printf("you want me to generate the key or you have your key? 1 for generate 2 for enter your key\n");
+    scanf("%d", &choice);
+    if (choice == 1) {
+        generate_key(key);
+        print_key();
+    } else if (choice == 2) {
+        printf("Enter the encryption key (16 bytes in hex): ");
+        save_key(key);
+    }
 
     uint8_t round_keys[(AES_ROUNDS + 1) * AES_BLOCK_SIZE];
     key_expansion(key, round_keys);

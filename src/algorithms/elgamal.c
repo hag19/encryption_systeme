@@ -5,6 +5,8 @@
 #include <string.h>
 #include <time.h>
 #include "../types/constants.h"
+#include "key_handeling.h"
+
 
 mpz_t p_el, g, y, x, k,a, b, m,s;
 
@@ -14,6 +16,41 @@ void initializeElGamal() {
 
 void clearElGamal() {
     mpz_clears(p_el, g, y, x,a, b, m,s, NULL);
+}
+void elGamalStore(FILE *keyFile) {
+    // Write public key (e), private key (d), and modulus (n) to the file
+    char *p_base62 = mpz_get_str(NULL, 62, p_el);
+    char *x_base62 = mpz_get_str(NULL, 62, x);
+    char *y_base62 = mpz_get_str(NULL, 62, y);
+
+    fprintf(keyFile, "p=%s\n", p_base62);
+    fprintf(keyFile, "g=%Zd\n", g);
+    fprintf(keyFile, "y=%s\n", y_base62);
+    fprintf(keyFile, "x=%s\n", x_base62);
+    gmp_printf("Generated public key (p, g, y): (%s, %Zd, %s)\nGenerated private key (x): (%s)\n", p_base62, g, y_base62,x_base62);
+    free(p_base62);
+    free(x_base62);
+    free(y_base62);
+
+}
+
+// Function to load keys from a .key file
+void elGamalLoad(FILE *keyFile) {
+    char line[BUFFER_SIZE];
+    char x_str[BUFFER_SIZE];
+    char p_el_str[BUFFER_SIZE];
+
+    // Read the key file line by line
+    while (fgets(line, sizeof(line), keyFile)) {
+        if (strncmp(line, "x=", 2) == 0) {
+            sscanf(line, "x=%s\n", x_str);
+        } else if (strncmp(line, "p=", 2) == 0) {
+            sscanf(line, "p=%s\n", p_el_str);
+        }
+    }
+    // Convert the strings back to mpz_t
+    mpz_set_str(x, x_str, 62);
+    mpz_set_str(p_el, p_el_str, 62);
 }
 
 void generateElGamalKeys() {
@@ -33,14 +70,6 @@ void generateElGamalKeys() {
 
     // Compute public key y = g^x mod p
     mpz_powm(y, g, x, p_el);
-
-    char *p_base62 = mpz_get_str(NULL, 62, p_el);
-    char *x_base62 = mpz_get_str(NULL, 62, x);
-    char *y_base62 = mpz_get_str(NULL, 62, y);
-
-    gmp_printf("Generated public key (p, g, y): (%s, %Zd, %s)\nGenerated private key (x): (%s)\n", p_base62, g, y_base62,x_base62);
-    free(p_base62);
-    free(x_base62);
     gmp_randclear(state);
 }
 
@@ -79,7 +108,7 @@ void encryptElGamalFile(const char *filePath) {
         free(a_base62);
         free(b_base62);
     }
-
+    storeKeysToFile(filePath, elGamalStore);
     clearElGamal();
     gmp_randclear(state);
     fclose(in);
@@ -101,15 +130,8 @@ void decryptElGamalFile(const char *filePath) {
         if (out) fclose(out);
         exit(EXIT_FAILURE);
     }
-initializeElGamal();
-    char keyStr[BUFFER_SIZE], pStr[BUFFER_SIZE];
-    printf("Enter private key (x): \n");
-    scanf("%s", keyStr);
-    printf("Enter prime (p): \n");
-    scanf("%s", pStr);
-    mpz_set_str(x, keyStr, 62);
-    mpz_set_str(p_el, pStr, 62);
-
+    initializeElGamal();
+    loadKeysFromFile(filePath, elGamalLoad);
     char a_str[BUFFER_SIZE], b_str[BUFFER_SIZE];
     while (fscanf(in, "%s %s", a_str, b_str) != EOF) {
         mpz_set_str(a, a_str, 62);

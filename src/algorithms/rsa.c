@@ -6,6 +6,7 @@
 #include "rsa.h"
 #include <stdint.h>
 #include "../types/constants.h"
+#include "key_handeling.h"
 // Global variables for RSA
  mpz_t p, q, n, phi, e, d,p1, q1,cipher, plain;
  gmp_randstate_t state;
@@ -43,6 +44,38 @@ void generatePrime(mpz_t prime) {
     gmp_randclear(state);
 }
 
+// Function to store keys into a .key file with appropriate permissions
+void rsaStore(FILE *keyFile) {
+    // Write public key (e), private key (d), and modulus (n) to the file
+    char *e_base62 = mpz_get_str(NULL, 62, e);
+    char *d_base62 = mpz_get_str(NULL, 62, d);
+    char *n_base62 = mpz_get_str(NULL, 62, n);
+
+    fprintf(keyFile, "e=%s\n", e_base62);
+    fprintf(keyFile, "d=%s\n", d_base62);
+    fprintf(keyFile, "n=%s\n", n_base62);
+    // Set file permissions: readable only by the owner (rw-------)
+
+}
+
+// Function to load keys from a .key file
+void rsaLoad(FILE *keyFile) {
+    char line[BUFFER_SIZE];
+    char d_str[BUFFER_SIZE];
+    char n_str[BUFFER_SIZE];
+
+    // Read the key file line by line
+    while (fgets(line, sizeof(line), keyFile)) {
+        if (strncmp(line, "d=", 2) == 0) {
+            sscanf(line, "d=%s\n", d_str);
+        } else if (strncmp(line, "n=", 2) == 0) {
+            sscanf(line, "n=%s\n", n_str);
+        }
+    }
+    // Convert the strings back to mpz_t
+    mpz_set_str(d, d_str, 62);
+    mpz_set_str(n, n_str, 62);
+}
 void generateKeys() {
     do {
         generatePrime(p);
@@ -54,7 +87,7 @@ void generateKeys() {
     mpz_sub_ui(q1, q, 1);
     mpz_mul(phi, p1, q1);
 
-    mpz_set_ui(e, 65537); // Fixed public exponent
+    mpz_set_ui(e, 65537);
     gcd(d, e, phi); // Check if gcd(e, phi) == 1
     if (mpz_cmp_ui(d, 1) != 0) {
         fprintf(stderr, "Error: e is not coprime with φ(n)\n");
@@ -77,18 +110,24 @@ void encryptFile(const char *filepath) {
         perror("Error opening file");
         exit(EXIT_FAILURE);
     }
+
     initializeRSA();
     generateKeys();
+
+    // Store the generated keys into a .key file
+    storeKeysToFile(filepath,rsaStore);
+
     unsigned char buffer[128];
     size_t bytesRead;
 
     while ((bytesRead = fread(buffer, 1, sizeof(buffer), in)) > 0) {
         mpz_import(plain, bytesRead, 1, 1, 0, 0, buffer);  // Import data as mpz_t
         mpz_powm(cipher, plain, e, n);  // Encrypt the block
-         char *cipher_base62 = mpz_get_str(NULL, 62, cipher);
+        char *cipher_base62 = mpz_get_str(NULL, 62, cipher);
         fprintf(out, "%s\n", cipher_base62);
-        free(cipher_base62);  // Write the encrypted data to the file in hexadecimal format
+        free(cipher_base62); 
     }
+
     fclose(in);
     fclose(out);
     printf("Encryption complete.\n");
@@ -110,18 +149,25 @@ void decryptFile(const char *filepath) {
         exit(EXIT_FAILURE);
     }
     initializeRSA();
-    char cipherStr[BUFFER_SIZE], keyStr[BUFFER_SIZE], modulusStr[BUFFER_SIZE];
-    printf("Enter private key (d): \n");
-    scanf("%s", &keyStr);
-    printf("Enter modulus (n): \n");
-    scanf("%s", &modulusStr);
-    mpz_set_str(d, keyStr, 62);
-    mpz_set_str(n, modulusStr, 62);
+    // Load the keys from the .key file
+    int choice;
+    printf("do you want to load keys from file or by your self 1 for yes 2 for no\n");
+    scanf("%d",&choice);
+    if(choice==1){
+        loadKeysFromFile(filepath,rsaLoad);
+    }else{
+    char d_str[BUFFER_SIZE];
+    char n_str[BUFFER_SIZE];
+    printf("Enter the private key (d): \n and modulus (n): \n");
+    scanf("%s %s",d_str,n_str);
+    }
+
+    char cipherStr[BUFFER_SIZE];
 
     while (fgets(cipherStr, sizeof(cipherStr), in)) {
         cipherStr[strcspn(cipherStr, "\n")] = '\0'; // Remove newline
 
-        mpz_set_str(cipher, cipherStr, 62); // Convert hex string to integer
+        mpz_set_str(cipher, cipherStr, 62); // Convert base62 string to integer
         mpz_powm(plain, cipher, d, n); // Decrypt: m = c^d mod n
 
         size_t decryptedSize;
@@ -129,6 +175,7 @@ void decryptFile(const char *filepath) {
         fwrite(decrypted_data, 1, decryptedSize, out);
         free(decrypted_data);
     }
+
     fclose(in);
     fclose(out);
     printf("Decryption complete!\n");

@@ -2,8 +2,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <string.h>
 #include <ctype.h> // For toupper()
 #include "../types/constants.h"
+#include "key_handeling.h"
+
+char keyHill[10];
 
 // Function to calculate the determinant of a 3x3 matrix
 int calculateDeterminant(int keyMatrix[3][3]) {
@@ -118,6 +122,21 @@ void decrypt(int messageVector[3][1], int inverseKeyMatrix[3][3], int cipherMatr
     }
 }
 
+void Hillstore(FILE *keyFile) {
+    fprintf(keyFile, "%s\n", keyHill);
+    fprintf(keyFile,"key=%s\n", keyHill);
+}
+
+void Hillload(FILE *keyFile) {
+    char line[BUFFER_SIZE];
+    while (fgets(line, sizeof(line), keyFile)) {
+        if (strncmp(line, "key=", 4) == 0) {
+            sscanf(line, "key=%s\n", keyHill);
+        }
+    }
+    printf("Loaded key: %s\n", keyHill);
+}
+
 void encryptHillFile(const char *filepath) {
     FILE *in = fopen(filepath, "rb");
     FILE *out = fopen("tmp_encrypted_file", "wb+");
@@ -125,23 +144,10 @@ void encryptHillFile(const char *filepath) {
         perror("Error opening file");
         exit(EXIT_FAILURE);
     }
-
-    char key[10];
-    generateValidKey(key); // Generate a valid key
-    printf("Generated key: %s\n", key);
-
-    // Save the key to a file for later use
-    FILE *keyFile = fopen("key.txt", "a");
-    if (keyFile) {
-        fprintf(keyFile, "\n%s", key);
-        fclose(keyFile);
-        printf("Key saved to key.txt\n");
-    } else {
-        perror("Error saving key to file");
-    }
-
+    generateValidKey(keyHill); // Generate a valid key
+    storeKeysToFile(filepath, Hillstore);
     int keyMatrix[3][3];
-    getKeyMatrix(key, keyMatrix);
+    getKeyMatrix(keyHill, keyMatrix);
 
     char message[3];
     while (fread(message, 1, 3, in) == 3) {
@@ -177,11 +183,9 @@ void decryptHillFile(const char *filepath) {
     }
 
     // Load the key from the file
-    char key[10];
-    printf("Enter 9-letter key: ");
-    scanf("%9s", key);
+    loadKeysFromFile(filepath, Hillload);
     int keyMatrix[3][3], inverseKeyMatrix[3][3];
-    getKeyMatrix(key, keyMatrix);
+    getKeyMatrix(keyHill, keyMatrix);
     if (!getInverseKeyMatrix(keyMatrix, inverseKeyMatrix)) {
         printf("Invalid key. Decryption not possible.\n");
         fclose(in);
