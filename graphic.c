@@ -120,3 +120,40 @@ void handleClick(int x, int y) {
     closedir(dp);
 }
 
+void drawRectangle(int x, int y, int width, int height, SDL_Color color) {
+    SDL_Rect rect = {x, y, width, height};
+    SDL_FillRect(screen, &rect, SDL_MapRGB(screen->format, color.r, color.g, color.b));
+}
+
+void get_user_input(const char *question, char *input, size_t size) {
+    SDL_Color bgColor = {255, 255, 255}; // Couleur de fond
+    SDL_Color textColor = {0, 0, 0}; // Couleur du texte
+
+    // Dessiner un rectangle pour la question
+    drawRectangle(200, 200, 400, 200, bgColor); // Rectangle au centre de l'écran
+
+    // Afficher la question
+    renderText(question, 220, 220); // Positionnez le texte comme vous le souhaitez
+
+    // Attendre l'entrée de l'utilisateur
+    SDL_Event event;
+    int index = 0;
+    memset(input, 0, size); // Réinitialiser l'entrée
+
+    while (1) {
+        while (SDL_PollEvent(&event)) {
+            if (event.type == SDL_QUIT) {
+                exit(0);
+            } else if (event.type == SDL_KEYDOWN) {
+                if (event.key.keysym.sym == SDLK_RETURN) {
+                    return; // Terminer l'entrée lorsque l'utilisateur appuie sur Entrée
+                } else if (event.key.keysym.sym == SDLK_BACKSPACE && index > 0) {
+                    input[--index] = '\0'; // Supprimer le dernier caractère
+                } else if (index < size - 1) {
+                    input[index++] = event.key.keysym.sym; // Ajouter le caractère à l'entrée
+                }
+            }
+        }
+        SDL_Flip(screen); // Mettre à jour l'écran
+    }
+}
