@@ -1,3 +1,6 @@
+/*
+gcc main.c -o file_manager.exe -I/mingw64/include/SDL -Dmain=SDL_main -L/mingw64/lib -lmingw32 -lSDLmain -lSDL -lSDL_ttf -lSDL_image -mwindows -mconsole
+ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
