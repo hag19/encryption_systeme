@@ -9,7 +9,7 @@ OBJ_DIR = ./obj
 BIN_DIR = ./bin
 
 # Target executable
-TARGET = $(BIN_DIR)/my_program
+TARGET = $(BIN_DIR)/main
 
 # Source files
 SRCS = $(wildcard $(SRC_DIR)/algorithms/*.c) ./main.c $(SRC_DIR)/plugins/plugin_manager.c
