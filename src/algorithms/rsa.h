@@ -15,10 +15,8 @@ void modInverse(mpz_t result, mpz_t e, mpz_t phi);
 void generateKeys();
 void encryptFile(const char *filePath);
 void decryptFile(const char *filePath);
-
+void rsaStore(FILE *keyFile); 
+void rsaLoad(FILE *keyFile);  
 extern EncryptionAlgorithm rsa_algorithm;
-
-// Global variables for RSA
-extern mpz_t p, q, n, phi, e, d;
 
 #endif // RSA_H
