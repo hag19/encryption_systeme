@@ -131,7 +131,7 @@ void decryptFile(const char *filepath) {
     }
     fclose(in);
     fclose(out);
-    printf("Decryption complete! Decrypted data saved in decrypted.txt\n");
+    printf("Decryption complete!\n");
 
     // After successful decryption, replace the original file with the decrypted one
     if (rename("tmp_decrypted_file", filepath) != 0) {
