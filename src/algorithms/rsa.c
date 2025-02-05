@@ -6,7 +6,8 @@
 #include "rsa.h"
 #include <stdint.h>
 #include "../types/constants.h"
-#include "key_handeling.h"
+#include "../file_func/key_handeling.h"
+#include "../file_func/delete_file.h"
 // Global variables for RSA
  mpz_t p, q, n, phi, e, d,p1, q1,cipher, plain;
  gmp_randstate_t state;
@@ -50,12 +51,11 @@ void rsaStore(FILE *keyFile) {
     char *e_base62 = mpz_get_str(NULL, 62, e);
     char *d_base62 = mpz_get_str(NULL, 62, d);
     char *n_base62 = mpz_get_str(NULL, 62, n);
-
+printf("e=%s\n", e_base62);
     fprintf(keyFile, "e=%s\n", e_base62);
     fprintf(keyFile, "d=%s\n", d_base62);
     fprintf(keyFile, "n=%s\n", n_base62);
     // Set file permissions: readable only by the owner (rw-------)
-
 }
 
 // Function to load keys from a .key file
@@ -133,7 +133,8 @@ void encryptFile(const char *filepath) {
     printf("Encryption complete.\n");
 
     // After successful encryption, replace the original file with the encrypted one
-    if (rename("tmp_encrypted_file", filepath) != 0) {
+    if (rename_file("tmp_encrypted_file",filepath) != 0) {
+        char keyFilePath[BUFFER_SIZE];
         perror("Error replacing original file with encrypted file");
         exit(EXIT_FAILURE);
     }
@@ -151,7 +152,7 @@ void decryptFile(const char *filepath) {
     initializeRSA();
     // Load the keys from the .key file
     int choice;
-    printf("do you want to load keys from file or by your self 1 for yes 2 for no\n");
+    printf("do you want to load keys from file? 1 for yes 2 for no\n");
     scanf("%d",&choice);
     if(choice==1){
         loadKeysFromFile(filepath,rsaLoad);
@@ -183,8 +184,8 @@ void decryptFile(const char *filepath) {
     printf("Decryption complete!\n");
 
     // After successful decryption, replace the original file with the decrypted one
-    if (rename("tmp_decrypted_file", filepath) != 0) {
-        perror("Error replacing original file with decrypted file");
+    if (rename_file("tmp_decrypted_file",filepath) != 0) {
+        perror("Error replacing original file with encrypted file");
         exit(EXIT_FAILURE);
     }
     printf("Original file replaced with decrypted version.\n");

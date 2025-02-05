@@ -5,7 +5,7 @@
 #include <time.h>
 #include <gmp.h>
 #include "../types/constants.h"
-#include "key_handeling.h"
+#include "../file_func/key_handeling.h"
 #include "aes.h"
 mpz_t dh_p, dh_g, dh_a, dh_A, dh_B, shared_secret;
 

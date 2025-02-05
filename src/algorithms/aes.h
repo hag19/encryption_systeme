@@ -17,7 +17,7 @@ void key_expansion(const uint8_t *key, uint8_t *round_keys);
 void aes_encrypt(uint8_t *data, const uint8_t *round_keys);
 void aes_decrypt(uint8_t *data, const uint8_t *round_keys);
 void generate_key(uint8_t *key);
-void save_key(const char *your_key); 
+void save_key(); 
 void print_key();
 void aes_encrypt_file(const char *filepath);
 void aes_decrypt_file(const char *filepath);

@@ -6,6 +6,8 @@
 #include "aes.h"
 #include <unistd.h>
 #include "../types/constants.h"
+#include "../file_func/key_handeling.h"
+#include "../file_func/delete_file.h"
 uint8_t key[AES_KEY_SIZE];
 static const uint8_t sbox[256] = {
     0x63, 0x7c, 0x77, 0x7b, 0xf2, 0x6b, 0x6f, 0xc5, 0x30, 0x01, 0x67, 0x2b, 0xfe, 0xd7, 0xab, 0x76,
@@ -39,7 +41,26 @@ static const uint8_t inv_sbox[256] = {
 static const uint8_t rcon[10] = {
     0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1B, 0x36
 };
+// Function to convert a hexadecimal string to a byte array
+void hex_string_to_byte_array(const char *hex_string, uint8_t *byte_array, size_t byte_array_size) {
+    for (size_t i = 0; i < byte_array_size; i++) {
+        sscanf(hex_string + 2 * i, "%2hhx", &byte_array[i]);
+    }
+}
 
+// Function to convert a byte array to a hexadecimal string
+void byte_array_to_hex_string(const uint8_t *byte_array, size_t byte_array_size, char *hex_string) {
+    for (size_t i = 0; i < byte_array_size; i++) {
+        sprintf(hex_string + 2 * i, "%02x", byte_array[i]);
+    }
+    hex_string[2 * byte_array_size] = '\0';
+}
+void remove_padding(uint8_t *data, size_t *length) {
+    uint8_t pad = data[*length - 1];
+    if (pad <= AES_BLOCK_SIZE) {
+        *length -= pad;
+    }
+}
 void sub_bytes(uint8_t *state) {
     for (int i = 0; i < AES_BLOCK_SIZE; i++)
         state[i] = sbox[state[i]];
@@ -128,9 +149,16 @@ void key_expansion(const uint8_t *key, uint8_t *round_keys) {
     }
 }
 
-void aes_encrypt(uint8_t *data, const uint8_t *round_keys) {
-    add_round_key(data, round_keys);
+void print_state(const char *label, const uint8_t *state) {
+    printf("%s:\n", label);
+    for (int i = 0; i < AES_BLOCK_SIZE; i++) {
+        printf("%02x ", state[i]);
+        if ((i + 1) % 4 == 0) printf("\n");
+    }
+    printf("\n");
+}
 
+void aes_encrypt(uint8_t *data, const uint8_t *round_keys) {
     for (int round = 1; round < AES_ROUNDS; round++) {
         sub_bytes(data);
         shift_rows(data);
@@ -165,12 +193,15 @@ void generate_key(uint8_t *key) {
     }
 }
 
-void save_key(const char *your_key) {
-    for (int i = 0; i < AES_KEY_SIZE; i++) {
-        key[i] = your_key[i];
+void save_key() {
+    char hex_key[2 * AES_KEY_SIZE + 1];
+    printf("Enter the encryption key in hexadecimal format (32 characters): ");
+    if (scanf("%32s", hex_key) != 1) {
+        fprintf(stderr, "Invalid key input.\n");
+        exit(EXIT_FAILURE);
     }
+    hex_string_to_byte_array(hex_key, key, AES_KEY_SIZE);
 }
-
 void print_key() {
     printf("Encryption key: ");
     for (int i = 0; i < AES_KEY_SIZE; i++) {
@@ -179,86 +210,119 @@ void print_key() {
     printf("\n");
 }
 
+// Function to store keys into a .key file with appropriate permissions
+// Function to store keys into a .key file with appropriate permissions
+void aesStore(FILE *keyFile) {
+    char hex_key[2 * AES_KEY_SIZE + 1];
+    byte_array_to_hex_string(key, AES_KEY_SIZE, hex_key);
+    fprintf(keyFile, "key=%s\n", hex_key);
+}
+
+// Function to load keys from a .key file
+void aesLoad(FILE *keyFile) {
+    char line[BUFFER_SIZE];
+    char hex_key[2 * AES_KEY_SIZE + 1];
+
+    // Read the key file line by line
+    while (fgets(line, sizeof(line), keyFile)) {
+        if (strncmp(line, "key=", 4) == 0) {
+            sscanf(line, "key=%32s\n", hex_key);
+            hex_string_to_byte_array(hex_key, key, AES_KEY_SIZE);
+        }
+    }
+}
 void aes_encrypt_file(const char *filepath) {
     int choice;
-    printf("do you have aes encryption key or you need one? 1 for generate 2 for enter your key\n");
+    printf("Do you have an AES encryption key or do you need one?\n 1. Generating\n 2. Enter your key\n 3. Load from a file\n");
     scanf("%d", &choice);
     if (choice == 1) {
         generate_key(key);
         print_key();
+        storeKeysToFile(filepath, aesStore); 
     } else if (choice == 2) {
-        printf("Enter the encryption key (16 bytes in hex): ");
-        save_key(key);
+        save_key();
+    } else if (choice == 3) {
+        loadKeysFromFile(filepath, aesLoad);
+    } else {
+        printf("Invalid choice\n");
+        exit(EXIT_FAILURE);
     }
 
     uint8_t round_keys[(AES_ROUNDS + 1) * AES_BLOCK_SIZE];
     key_expansion(key, round_keys);
 
-    FILE *file = fopen(filepath, "rb+");
-    if (!file) {
+    FILE *in = fopen(filepath, "rb");
+    FILE *out = fopen("tmp_encrypted_file", "wb+");  // Temporary encrypted file
+    if (!in || !out) {
         perror("Error opening file");
         exit(EXIT_FAILURE);
     }
 
     uint8_t buffer[AES_BLOCK_SIZE];
     size_t bytesRead;
-    while ((bytesRead = fread(buffer, 1, AES_BLOCK_SIZE, file)) > 0) {
+    while ((bytesRead = fread(buffer, 1, AES_BLOCK_SIZE, in)) > 0) {
         if (bytesRead < AES_BLOCK_SIZE) {
             // PKCS7 padding
             uint8_t pad = AES_BLOCK_SIZE - bytesRead;
             memset(buffer + bytesRead, pad, pad);
         }
         aes_encrypt(buffer, round_keys);
-        fseek(file, -bytesRead, SEEK_CUR);
-        fwrite(buffer, 1, AES_BLOCK_SIZE, file);
+        fwrite(buffer, 1, AES_BLOCK_SIZE, out);
     }
-    fclose(file);
+
+    fclose(in);
+    fclose(out);
     printf("Encryption complete.\n");
+
+    // After successful encryption, replace the original file with the encrypted one
+    if (rename_file("tmp_encrypted_file", filepath) != 0) {
+        perror("Error replacing original file with encrypted file");
+        exit(EXIT_FAILURE);
+    }
+    printf("Original file replaced with encrypted version.\n");
 }
 
 void aes_decrypt_file(const char *filepath) {
-    uint8_t key[AES_KEY_SIZE];
-    printf("Enter the decryption key (16 bytes in hex): ");
-    for (int i = 0; i < AES_KEY_SIZE; i++) {
-        unsigned int byte;
-        if (scanf("%2x", &byte) != 1) {
-            fprintf(stderr, "Invalid key input.\n");
-            exit(EXIT_FAILURE);
-        }
-        key[i] = (uint8_t)byte;
+    int choice;
+    printf("Do you have an AES decryption key stored as file or you will provide us?\n 1. Load from a file\n 2. Enter your key\n");
+    scanf("%d", &choice);
+    if (choice == 1) {
+        loadKeysFromFile(filepath, aesLoad);
+    } else if (choice == 2) {
+        save_key();
+    }else {
+        printf("Invalid choice\n");
+        exit(EXIT_FAILURE);
     }
 
     uint8_t round_keys[(AES_ROUNDS + 1) * AES_BLOCK_SIZE];
     key_expansion(key, round_keys);
 
-    FILE *file = fopen(filepath, "rb+");
-    if (!file) {
+    FILE *in = fopen(filepath, "rb");
+    FILE *out = fopen("tmp_decrypted_file", "wb+");  // Temporary decrypted file
+    if (!in || !out) {
         perror("Error opening file");
         exit(EXIT_FAILURE);
     }
 
     uint8_t buffer[AES_BLOCK_SIZE];
     size_t bytesRead;
-    while ((bytesRead = fread(buffer, 1, AES_BLOCK_SIZE, file)) > 0) {
+    while ((bytesRead = fread(buffer, 1, AES_BLOCK_SIZE, in)) > 0) {
         aes_decrypt(buffer, round_keys);
-        fseek(file, -AES_BLOCK_SIZE, SEEK_CUR);
-        fwrite(buffer, 1, AES_BLOCK_SIZE, file);
+        fwrite(buffer, 1, AES_BLOCK_SIZE, out);
     }
 
-    // Remove padding
-    fseek(file, -AES_BLOCK_SIZE, SEEK_END);
-    fread(buffer, 1, AES_BLOCK_SIZE, file);
-    uint8_t pad = buffer[AES_BLOCK_SIZE - 1];
-    if (pad <= AES_BLOCK_SIZE) {
-        fseek(file, -pad, SEEK_END);
-        long fileSize = ftell(file);
-        ftruncate(fileno(file), fileSize);
-    }
-
-    fclose(file);
+    fclose(in);
+    fclose(out);
     printf("Decryption complete.\n");
-}
 
+    // After successful decryption, replace the original file with the decrypted one
+    if (rename_file("tmp_decrypted_file", filepath) != 0) {
+        perror("Error replacing original file with decrypted file");
+        exit(EXIT_FAILURE);
+    }
+    printf("Original file replaced with decrypted version.\n");
+}
 EncryptionAlgorithm aes_algorithm = {
     .name = "AES",
     .encrypt = aes_encrypt_file,

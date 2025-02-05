@@ -5,8 +5,8 @@
 #include <string.h>
 #include <ctype.h> // For toupper()
 #include "../types/constants.h"
-#include "key_handeling.h"
-
+#include "../file_func/key_handeling.h"
+#include "../file_func/delete_file.h"
 char keyHill[10];
 
 // Function to calculate the determinant of a 3x3 matrix
@@ -167,7 +167,7 @@ void encryptHillFile(const char *filepath) {
 
     fclose(in);
     fclose(out);
-    if (rename("tmp_encrypted_file", filepath) != 0) {
+   if (rename_file("tmp_encrypted_file",filepath) != 0) {
         perror("Error replacing original file with encrypted file");
         exit(EXIT_FAILURE);
     }
@@ -211,8 +211,8 @@ void decryptHillFile(const char *filepath) {
 
     fclose(in);
     fclose(out);
-    if (rename("tmp_decrypted_file", filepath) != 0) {
-        perror("Error replacing original file with decrypted file");
+     if (rename_file("tmp_decrypted_file",filepath) != 0) {
+        perror("Error replacing original file with encrypted file");
         exit(EXIT_FAILURE);
     }
     printf("Decryption complete! File updated with decrypted data.\n");

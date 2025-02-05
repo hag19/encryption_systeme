@@ -17,6 +17,7 @@ void storeKeysToFile(const char *filepath,void (*storeKeysFormatFile)(FILE *keyF
     }else{
         printf("storeKeysFormatFile is not implemented or not providede correctly\n"); 
     }
+    fclose(keyFile);
     // Set file permissions: readable only by the owner (rw-------)
     chmod(keyFilePath, S_IRUSR | S_IWUSR);
 
@@ -38,5 +39,6 @@ void loadKeysFromFile(const char *filepath,void (*loadKeysFromFile)(FILE *keyFil
     }else{
         printf("loadKeysFormatFile is not implemented or not providede correctly\n"); 
     }
+    fclose(keyFile);
     printf("Keys have been loaded from %s.\n", keyFilePath);
 }

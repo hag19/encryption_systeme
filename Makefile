@@ -1,7 +1,15 @@
 # Compiler and flags
 CC = gcc
-CFLAGS = -I/usr/include/x86_64-linux-gnu -I./src/types
-LDFLAGS = -L/usr/lib/x86_64-linux-gnu -lgmp
+CFLAGS = -I./src/types
+LDFLAGS = -lgmp
+
+# Detect the operating system
+ifeq ($(OS),Windows_NT)
+    CFLAGS += -D_WIN32
+    LDFLAGS += -lws2_32
+else
+    CFLAGS += -D__linux__
+endif
 
 # Directories
 SRC_DIR = ./src
@@ -12,9 +20,18 @@ BIN_DIR = ./bin
 TARGET = $(BIN_DIR)/main
 
 # Source files
-SRCS = $(wildcard $(SRC_DIR)/algorithms/*.c) ./main.c $(SRC_DIR)/plugins/plugin_manager.c tests/benchmark.c
+SRCS = $(wildcard $(SRC_DIR)/algorithms/*.c) \
+       ./main.c \
+       $(SRC_DIR)/plugins/plugin_manager.c \
+       tests/benchmark.c \
+       $(wildcard $(SRC_DIR)/file_func/*.c)
+
+# Object files
 OBJS = $(patsubst $(SRC_DIR)/algorithms/%.c, $(OBJ_DIR)/algorithms/%.o, $(wildcard $(SRC_DIR)/algorithms/*.c)) \
-       $(OBJ_DIR)/main.o $(OBJ_DIR)/plugins/plugin_manager.o $(OBJ_DIR)/benchmark.o
+       $(OBJ_DIR)/main.o \
+       $(OBJ_DIR)/plugins/plugin_manager.o \
+       $(OBJ_DIR)/benchmark.o \
+       $(patsubst $(SRC_DIR)/file_func/%.c, $(OBJ_DIR)/file_func/%.o, $(wildcard $(SRC_DIR)/file_func/*.c))
 
 # Default target
 all: $(TARGET)
@@ -24,7 +41,7 @@ $(TARGET): $(OBJS)
 	@mkdir -p $(BIN_DIR)
 	$(CC) $(OBJS) -o $(TARGET) $(LDFLAGS)
 
-# Rule to build object files
+# Rule to build object files for algorithms
 $(OBJ_DIR)/algorithms/%.o: $(SRC_DIR)/algorithms/%.c
 	@mkdir -p $(OBJ_DIR)/algorithms
 	$(CC) $(CFLAGS) -c $< -o $@
@@ -42,6 +59,11 @@ $(OBJ_DIR)/plugins/plugin_manager.o: $(SRC_DIR)/plugins/plugin_manager.c
 # Rule to build object file for benchmark.c
 $(OBJ_DIR)/benchmark.o: tests/benchmark.c
 	@mkdir -p $(OBJ_DIR)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+# Rule to build object files for file_func
+$(OBJ_DIR)/file_func/%.o: $(SRC_DIR)/file_func/%.c
+	@mkdir -p $(OBJ_DIR)/file_func
 	$(CC) $(CFLAGS) -c $< -o $@
 
 # Clean up

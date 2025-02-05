@@ -5,7 +5,8 @@
 #include <string.h>
 #include <time.h>
 #include "../types/constants.h"
-#include "key_handeling.h"
+#include "../file_func/key_handeling.h"
+#include "../file_func/delete_file.h"
 
 
 mpz_t p_el, g, y, x, k,a, b, m,s;
@@ -114,8 +115,8 @@ void encryptElGamalFile(const char *filePath) {
     fclose(in);
     fclose(out);
 
-    if (remove(filePath) != 0 || rename("temp_encrypted_file", filePath) != 0) {
-        perror("Error renaming file");
+    if (rename_file("tmp_encrypted_file",filePath) != 0) {
+        perror("Error replacing original file with encrypted file");
         exit(EXIT_FAILURE);
     }
 }
@@ -151,10 +152,11 @@ void decryptElGamalFile(const char *filePath) {
     fclose(in);
     fclose(out);
     clearElGamal();
-    if (remove(filePath) != 0 || rename("temp_decrypted_file", filePath) != 0) {
-        perror("Error renaming file");
+    if (rename_file("tmp_decrypted_file",filePath) != 0) {
+        perror("Error replacing original file with encrypted file");
         exit(EXIT_FAILURE);
     }
+    printf("Decryption complete! File updated with decrypted data.\n");
 }
 
 EncryptionAlgorithm elgamal_algorithm = {
