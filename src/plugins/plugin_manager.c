@@ -7,6 +7,7 @@
 #include "../algorithms/elgamal.h"
 #include "../algorithms/hill.h"
 #include "../algorithms/diffie_hellman.h"
+#include "../algorithms/atbash.h"
 static EncryptionAlgorithm *algorithms[MAX_ALGORITHMS];
 static int algorithm_count = 0;
 static EncryptionAlgorithm *current_algorithm = NULL;
@@ -22,6 +23,7 @@ void register_existing_algorithms() {
     register_algorithm(&elgamal_algorithm);
     register_algorithm(&hill_algorithm);
     register_algorithm(&diffie_hellman_algorithm);
+    register_algorithm(&atbash_algorithm);
 }
 void display_algorithms() {
     printf("Available algorithms:\n");
